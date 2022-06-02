@@ -1,0 +1,79 @@
+--- 
+- name: Configure Katello Server
+  remote_user: root
+  hosts: hosts
+  tasks:
+    - name: Import Foreman repo GPG key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://yum.theforeman.org/releases/3.2/RPM-GPG-KEY-foreman
+    - name: Configure Foreman repo
+      yum:
+        name: https://yum.theforeman.org/releases/3.2/el8/x86_64/foreman-release.rpm
+        state: present
+        disable_gpg_check: yes
+    - name: Configure Katello repo
+      yum:
+        name: https://yum.theforeman.org/katello/4.4/katello/el8/x86_64/katello-repos-latest.rpm
+        state: present
+    - name: Import Puppet repo GPG key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://yum.puppet.com/RPM-GPG-KEY-puppet-20250406
+    - name: Configure Puppet repo
+      yum:
+        name: https://yum.puppet.com/puppet6-release-el-8.noarch.rpm
+        state: present
+    - name: Reset Ruby module
+      ansible.builtin.command: dnf module reset ruby -y
+    - name: Enable Ruby module
+      ansible.builtin.command: dnf module enable ruby:2.7 -y
+    - name: Reset PostgreSQL module
+      ansible.builtin.command: dnf module reset postgresql -y
+    - name: Enable PostgreSQL module
+      ansible.builtin.command: dnf module enable postgresql:12 -y
+    - name: Update OS
+      yum:
+        name: '*'
+        state: latest
+    - name: Install Foreman Packages
+      yum:
+        name: 
+          - foreman-installer-katello 
+    - name: Install EPEL repo
+      yum:
+        name: 
+          - oracle-epel-release-el8
+    - name: Install required packages
+      yum:
+        name: 
+          - ansible
+          - rubygem-bigdecimal
+    - name: Download Python Cloud Watch
+      get_url:
+        url: http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/python3-cloud-what-1.28.21-3.el8.x86_64.rpm
+        dest: /tmp/python3-cloud-what-1.28.21-3.el8.x86_64.rpm
+    - name: Download Subscription Manager certificates
+      get_url:
+        url: http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/subscription-manager-rhsm-certificates-1.28.21-3.el8.x86_64.rpm
+        dest: /tmp/subscription-manager-rhsm-certificates-1.28.21-3.el8.x86_64.rpm
+    - name: Download Subscription Manager
+      get_url:
+        url: https://vault.centos.org/centos/8/BaseOS/x86_64/os/Packages/python3-subscription-manager-rhsm-1.28.21-3.el8.x86_64.rpm
+        dest: /tmp/python3-subscription-manager-rhsm-1.28.21-3.el8.x86_64.rpm
+    - name: Install Python Cloud Watch
+      yum:
+        name: /tmp/python3-cloud-what-1.28.21-3.el8.x86_64.rpm
+        state: present
+        disable_gpg_check: yes
+    - name: Install Subscription Manager certificates
+      yum:
+        name: /tmp/subscription-manager-rhsm-certificates-1.28.21-3.el8.x86_64.rpm
+        state: present
+        disable_gpg_check: yes
+    - name: Install Subscription Manager
+      yum:
+        name: /tmp/python3-subscription-manager-rhsm-1.28.21-3.el8.x86_64.rpm
+        state: present
+        disable_gpg_check: yes
+    
